@@ -186,13 +186,18 @@ html.phone body.timed .choice{min-height:44px;padding:8px 12px}
 html.phone body.timed .rank .btn{position:static!important;box-shadow:none!important}
 html.phone body.timed .lockbar{bottom:calc(64px + env(safe-area-inset-bottom))!important}
 .nwser{font:600 12px/1.4 Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}.nwser b{color:#b8663a;font-weight:700}.nwser a{color:inherit;text-decoration:underline;text-underline-offset:3px}.nwser a:hover{color:var(--ink)}a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
+html.phone body.timed .locw{transform:scale(.72);transform-origin:100% 100%}
+@media(max-width:360px){html.phone body.timed .locw{transform:scale(.6)}}
+html.phone .choices .choice span.u{display:none}
+.choices{grid-template-columns:repeat(2,minmax(0,1fr))}.choices .choice{min-width:0}.choice span.u{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}html.phone .choice{gap:8px}
+html.phone body.timed .rank .btn:not([disabled]){position:sticky!important;bottom:calc(64px + env(safe-area-inset-bottom))!important;box-shadow:0 6px 18px rgba(0,0,0,.18)!important;z-index:5}
 </style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
 <div class="toast" id="toast"></div>
 <script>
-const VERSION='v4';
+const VERSION='v6';
 /* ---------- timer (shared) ---------- */
 const TM={on:true,left:0,secs:15,copper:5,t0:0,iv:null,key:null,onUp:null,
   start(key,secs,copper,onUp){if(!this.on){this.hide();return}if(this.key===key&&this.iv)return;this.stop();this.key=key;this.secs=secs;this.copper=copper;this.onUp=onUp;this.t0=performance.now();this.build();this.draw(secs);
@@ -257,12 +262,12 @@ function applyLayout(){const l=curLayout();['phone','tablet','desktop'].forEach(
 let lastLay=null;addEventListener('resize',()=>{const l=applyLayout();if(l!==lastLay){lastLay=l;if(S.screen!=='menu')render(true)}});
 window.setLayout=l=>{S.layout=l;save();render()};
 function render(keep){lastLay=applyLayout();document.getElementById('app').innerHTML=S.screen==='menu'?menuHTML():S.screen==='play'?playHTML():resultsHTML();if(!keep)scrollTo(0,0);syncTimer()}
-function syncTimer(){if(S.screen!=='play'){TM.hide();return}const R=S.game[S.cur];if(R.done)return;TM.start(GSER+':'+S.cur,15,5,()=>{R.pick=null;R.timedOut=true;R.secs=15;R.done=true;advance()})}
+function syncTimer(){if(S.screen!=='play'){TM.hide();return}const R=S.game[S.cur];if(R.done)return;TM.start(GSER+':'+S.cur,30,10,()=>{R.timedOut=true;R.secs=30;R.done=true;advance()})}
 function advance(){S.locZoom=1;S.cur++;if(S.cur>=S.game.length)S.screen='results';render()}
 function menuHTML(){const row=(key,obj)=>`<div class="opts">${Object.entries(obj).map(([k,v])=>`<button class="opt ${String(S[key])===String(k)?'on':''}" onclick="setOpt('${key}','${k}')">${v.t}<small>${key==='where'?(v.s?v.s+' · ':'')+pool(k).length+' countries':v.s||''}</small></button>`).join('')}</div>`;
   return `<div class="menuhead"><div><div class="nwser"><b>Natural Wonders</b> · Game 6 of 10 · <a href="https://jmcpublic.github.io/">All games</a></div><h1>How Many Borders?</h1></div><p class="sub">A country on its own, in silhouette. How many other countries share a land border with it? The neighbours appear at the end.</p></div>
   <div class="panel menu"><div><div class="label">Where</div>${row('where',WHERE)}</div>
-  <div><div class="label">Difficulty</div>${row('level',LEVEL)}${TM.menuRow('15 seconds a question')}<div class="label">Number of rounds</div><div class="opts">${ROUNDS.map(n=>`<button class="opt ${S.rounds===n?'on':''}" onclick="setOpt('rounds',${n})">${n} rounds</button>`).join('')}</div>
+  <div><div class="label">Difficulty</div>${row('level',LEVEL)}${TM.menuRow('30 seconds a round')}<div class="label">Number of rounds</div><div class="opts">${ROUNDS.map(n=>`<button class="opt ${S.rounds===n?'on':''}" onclick="setOpt('rounds',${n})">${n} rounds</button>`).join('')}</div>
   <div class="row" style="margin-top:18px"><button class="btn" onclick="startGame()">Start — ${S.rounds} rounds</button></div></div></div>
   <p class="foot">Layout <span class="lay">${Object.entries(LAYOUTS).map(([k,v])=>`<button class="${S.layout===k?'on':''}" onclick="setLayout('${k}')">${v}${k==='auto'&&S.layout==='auto'?' ('+LAYOUTS[autoLayout()]+')':''}</button>`).join('')}</span><br>${C.length} countries · Natural Wonders: How Many Borders ${VERSION} · <button class="srclink" onclick="openSources()">Sources</button></p>`}
 window.setOpt=(k,v)=>{S[k]=k==='rounds'?+v:v;save();render()};
@@ -275,11 +280,11 @@ function playHTML(){const R=S.game[S.cur],c=BYID[R.id];
   <div class="q">How many countries border <em>${esc(c.n)}</em>?<span>Round ${S.cur+1} of ${S.game.length} · land borders only</span></div>
   <div class="board"><div class="mapcard"><div class="cname">${esc(c.n)}</div>${silhouette(c)}${locBox(c)}</div>
   <div class="rank"><div class="label">Pick one</div><div class="choices">${ch}</div>
-  ${TM.on?'<div class="thint">Tap an answer to lock it in and move on.</div>':`<button class="btn" onclick="lock()" ${R.pick!=null?'':'disabled'}>${R.pick!=null?'Lock in answer':'Pick a number to lock in'}</button>`}<div class="kbd">Keys A–E choose · + / − resize the world map${TM.on?'':' · Enter locks in'}</div></div></div></div>`}
-window.choose=i=>{const R=S.game[S.cur];if(TM.on){if(R.done)return;R.done=true;R.pick=i;R.secs=TM.elapsed();TM.stop();render(true);setTimeout(advance,350);return}R.pick=i;render(true)};
-window.lock=()=>{const R=S.game[S.cur];if(R.pick==null||TM.on)return;advance()};
+  ${`<button class="btn" onclick="lock()" ${R.pick!=null?'':'disabled'}>${R.pick!=null?'Lock in answer':'Pick a number to lock in'}</button>`}<div class="kbd">Keys A–E choose · + / − resize the world map · Enter locks in</div></div></div></div>`}
+window.choose=i=>{const R=S.game[S.cur];if(R.done)return;R.pick=i;render(true)};
+window.lock=()=>{const R=S.game[S.cur];if(R.pick==null||R.done)return;if(TM.on){R.done=true;R.secs=TM.elapsed();TM.stop()}advance()};
 window.back=()=>{if(S.cur>0){S.locZoom=1;S.cur--;render()}};window.quit=()=>{TM.hide();S.screen='menu';render()};
-addEventListener('keydown',e=>{if(S.screen!=='play'||document.querySelector('.srcov.open'))return;const k=e.key.toUpperCase();const i=LET.indexOf(k);if(k.length===1&&i>=0)choose(i);else if(e.key==='+'||e.key==='=')zoomLoc(1);else if(e.key==='-'||e.key==='_')zoomLoc(-1);else if(e.key==='Enter'&&!TM.on){e.preventDefault();lock()}});
+addEventListener('keydown',e=>{if(S.screen!=='play'||document.querySelector('.srcov.open'))return;const k=e.key.toUpperCase();const i=LET.indexOf(k);if(k.length===1&&i>=0)choose(i);else if(e.key==='+'||e.key==='=')zoomLoc(1);else if(e.key==='-'||e.key==='_')zoomLoc(-1);else if(e.key==='Enter'){e.preventDefault();lock()}});
 /* ---------- results ---------- */
 function verdict(p){return p===1?'Perfect. You know your neighbours.':p>=.8?'Excellent. A real border expert.':p>=.6?'Solid effort. A few surprises in there.':p>=.4?'Some of those borders fooled you.':'Plenty of borders left to cross!'}
 const kmOf=t=>{const m=t.match(/([\d,.]+)\s*km/);return m?parseFloat(m[1].replace(/,/g,'')):0};
