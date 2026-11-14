@@ -214,7 +214,10 @@ html.phone body.timed .rank .btn:not([disabled]){position:sticky!important;botto
 .wmsvg path{vector-effect:non-scaling-stroke}
 .wmtip{position:absolute;left:50%;bottom:calc(16px + var(--tbh,0px));transform:translateX(-50%);background:rgba(22,19,15,.82);color:#fff;font-size:12.5px;border-radius:999px;padding:6px 12px;pointer-events:none;white-space:nowrap}
 html.phone .wmhd span{display:none}
-@media (min-width:760px) and (max-height:720px){.wrap{padding-top:10px!important;padding-bottom:8px!important}.foot{margin-top:6px!important;margin-bottom:4px!important}.panel.menu{margin-top:10px!important}}</style>
+@media (min-width:760px) and (max-height:720px){.wrap{padding-top:10px!important;padding-bottom:8px!important}.foot{margin-top:6px!important;margin-bottom:4px!important}.panel.menu{margin-top:10px!important}}
+/* phones: the five numbers sit in one row (letter above number) so every choice is on screen at once (14 Nov) */
+html.phone .choices{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:6px!important}html.phone .choices .choice{grid-column:auto!important;flex-direction:column;justify-content:center;gap:4px!important;padding:6px 2px!important;min-height:0!important;text-align:center}html.phone .choices .choice b{font-size:20px;line-height:1}html.phone .choices{margin-bottom:12px}
+</style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
